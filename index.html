@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" data-board-theme="green">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess.com Free Game Review &amp; Match Simulator</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ====================================================================
+       LEFT NAVIGATION RAIL
+       ==================================================================== -->
+  <aside class="left-rail">
+    <div class="brand-logo" title="Chess.com Free Game Review &amp; Simulator" onclick="App.switchView('review')">
+      <svg viewBox="0 0 45 45" fill="none">
+        <path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" fill="#FFFFFF"/>
+        <path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4.003 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-.994-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-1.992 2.5-3c1 0 1 3 1 3" fill="#FFFFFF"/>
+      </svg>
+    </div>
+
+    <nav class="rail-nav">
+      <button class="rail-btn active" id="nav-review" onclick="App.switchView('review')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7l1.5 3 3.3.5-2.4 2.3.6 3.2L12 14.5 9 16l.6-3.2-2.4-2.3 3.3-.5L12 7z" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>Review</span>
+      </button>
+
+      <button class="rail-btn" id="nav-simulate" onclick="App.switchView('simulate')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>Simulate</span>
+      </button>
+
+      <button class="rail-btn" id="nav-library" onclick="App.switchView('library')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <span>Games</span>
+      </button>
+
+      <button class="rail-btn" id="nav-settings" onclick="App.switchView('settings')" style="margin-top:auto;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>
+        </svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ====================================================================
+       VIEW 1: GAME REVIEW (Figma Screens 1 & 2)
+       ==================================================================== -->
+  <main class="app-view active" id="view-review">
+    <!-- Left Games Sidebar -->
+    <section class="games-sidebar">
+      <div class="account-card">
+        <div class="account-row" style="margin-bottom:8px;">
+          <div class="avatar-circle" id="sidebar-avatar">?</div>
+          <div class="account-meta" style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 id="sidebar-username">Active Player</h3>
+              <span id="sidebar-rating-badge" style="font-size:11px; font-weight:700; color:var(--brand-green-light);"></span>
+            </div>
+            <p id="sidebar-sub">Enter any Chess.com username below</p>
+          </div>
+        </div>
+
+        <!-- Direct Player Lookup Box -->
+        <form onsubmit="event.preventDefault(); App.loadPlayerFromSidebar();" style="display:flex; gap:6px; margin-bottom:8px;">
+          <input type="text" class="form-input" id="sidebar-player-input" placeholder="e.g. Hikaru, MagnusCarlsen, you" style="padding:6px 8px; font-size:12px; flex:1;" />
+          <button type="submit" class="btn-primary" style="padding:6px 12px; font-size:12px; font-weight:700;">Load</button>
+        </form>
+
+        <div class="sync-status-row">
+          <div class="sync-dot-label">
+            <span class="pulse-dot"></span>
+            <span id="sidebar-sync-text">Live Sync Ready</span>
+          </div>
+          <button class="btn-mini" onclick="App.triggerSync(false)">Refresh</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>RECENT GAMES (CHESS.COM API)</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="btn-mini" onclick="App.promptImportGame()" title="Paste recent Chess.com game link or PGN" style="padding:2px 8px; font-size:10px; font-weight:700;">+ Link/PGN</button>
+          <span id="sidebar-games-count">0</span>
+        </div>
+      </div>
+
+      <div class="sidebar-games-list" id="sidebar-games-list">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div class="fair-play-footer">
+        <strong>Post-Game Analysis &amp; Simulator</strong>
+        <span>CAPS2 Accuracy · Match Simulator included</span>
+      </div>
+    </section>
+
+    <!-- Center Chessboard Stage -->
+    <section class="board-stage">
+      <div class="stage-header">
+        <div class="stage-title">
+          <h2 id="review-matchup-title">DilanChess vs GM_Alex99</h2>
+          <p id="review-opening-subtitle">C11 French Defense: Classical · Rapid 10+0</p>
+        </div>
+        <button class="btn-secondary" onclick="App.switchView('simulate')">Open Match Simulator →</button>
+      </div>
+
+      <!-- Top Player (Black / Top after flip) -->
+      <div class="player-bar">
+        <div class="player-info">
+          <div class="player-avatar" id="top-player-avatar">G</div>
+          <div>
+            <span class="player-name" id="top-player-name">GM_Alex99</span>
+            <span class="player-rating" id="top-player-rating">(1842)</span>
+          </div>
+        </div>
+        <div class="clock-box" id="top-player-clock">10:00</div>
+      </div>
+
+      <!-- Eval Bar + 8x8 Board -->
+      <div class="board-row">
+        <div class="eval-bar-container">
+          <span class="eval-score-label top" id="eval-label-top"></span>
+          <div class="eval-bar-white" id="eval-bar-fill" style="height: 50%;"></div>
+          <span class="eval-score-label bottom" id="eval-label-bottom">+0.20</span>
+        </div>
+
+        <div class="chessboard-wrapper">
+          <div class="chessboard-grid" id="review-board-grid"></div>
+          <svg class="board-arrows-overlay" id="review-arrows-svg" viewBox="0 0 520 520"></svg>
+        </div>
+      </div>
+
+      <!-- Bottom Player (White / Bottom after flip) -->
+      <div class="player-bar">
+        <div class="player-info">
+          <div class="player-avatar white-av" id="bottom-player-avatar">D</div>
+          <div>
+            <span class="player-name" id="bottom-player-name">DilanChess</span>
+            <span class="player-rating" id="bottom-player-rating">(1865)</span>
+          </div>
+        </div>
+        <div class="clock-box white-clock" id="bottom-player-clock">10:00</div>
+      </div>
+
+      <!-- Footer Legend & Quick Toggle -->
+      <div class="stage-footer-bar">
+        <div class="arrow-legend">
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:#81B64C;"></span>
+            <span id="best-move-footer-label">Green Arrow = Engine Best Move</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:#1BADA6;"></span>
+            <span>Teal = Brilliant / Tactical</span>
+          </div>
+        </div>
+        <label style="font-size:11px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="toggle-best-arrow" checked onchange="App.renderReviewStep()" />
+          <span>Show Best Move Arrow</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Right Game Review Panel -->
+    <aside class="right-panel">
+      <div class="panel-header">
+        <h2>Game Review</h2>
+        <span class="engine-pill">CAPS2 · Tactical Engine</span>
+      </div>
+
+      <!-- Evaluation Graph -->
+      <div class="eval-graph-box" id="eval-graph-box" title="Click anywhere on graph to jump to move">
+        <svg id="eval-graph-svg" viewBox="0 0 380 86"></svg>
+      </div>
+
+      <!-- Coach Commentary Card -->
+      <div class="coach-card" id="coach-card">
+        <div class="coach-top">
+          <div class="coach-badge-icon" id="coach-badge-icon"></div>
+          <div class="coach-headings">
+            <h3 id="coach-title">Game Review Ready</h3>
+            <p id="coach-subtitle">Step through moves below to inspect classifications</p>
+          </div>
+        </div>
+        <div class="coach-body" id="coach-body">
+          Select any move or press the right arrow key to see move accuracy, classification badges (!!, !, ★, ??), and recommended engine alternatives.
+        </div>
+        <div class="coach-actions">
+          <button class="btn-primary" onclick="App.jumpToNextKeyMoment()">Next Key Move (!! / ??)</button>
+          <button class="btn-secondary" onclick="App.previewBestMoveLine()">Highlight Best Move</button>
+        </div>
+      </div>
+
+      <!-- Players Accuracy Comparison -->
+      <div class="accuracy-grid">
+        <div class="acc-card white-card">
+          <div class="acc-val" id="acc-white-val">93.8%</div>
+          <div class="acc-sub" id="acc-white-sub">White · Est. 2060</div>
+        </div>
+        <div class="acc-card black-card">
+          <div class="acc-val" id="acc-black-val">71.4%</div>
+          <div class="acc-sub" id="acc-black-sub">Black · Est. 1570</div>
+        </div>
+      </div>
+
+      <!-- Move Classification Breakdown Table -->
+      <div class="breakdown-card" id="breakdown-table">
+        <!-- Populated dynamically with Figma badge SVGs -->
+      </div>
+
+      <!-- Move List -->
+      <div class="move-list-box" id="review-move-list"></div>
+
+      <!-- Playback Bar -->
+      <div class="playback-bar">
+        <button class="play-btn" title="First Move" onclick="App.goToPly(0)">|&lt;</button>
+        <button class="play-btn" title="Previous Move" onclick="App.stepPly(-1)">&lt;</button>
+        <button class="play-btn primary-play" id="btn-autoplay" onclick="App.toggleAutoplay()">Play</button>
+        <button class="play-btn" title="Next Move" onclick="App.stepPly(1)">&gt;</button>
+        <button class="play-btn" title="Last Move" onclick="App.goToLastPly()">&gt;|</button>
+        <button class="play-btn" title="Flip Board" onclick="App.flipBoard()">Flip</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ====================================================================
+       VIEW 2: MATCH SIMULATOR & BEST-MOVE VISUALIZER (NEW FEATURE!)
+       ==================================================================== -->
+  <main class="app-view" id="view-simulate">
+    <!-- Left Simulator Setup & Log Sidebar -->
+    <section class="games-sidebar">
+      <div class="sim-controls-card">
+        <h3 style="font-size:15px; font-weight:800;">Match Simulator Setup</h3>
+        <p style="font-size:11px; color:var(--text-muted);">
+          Simulate AI matches or play vs. the built-in Coach Bot with live Top-3 Best Move arrows on every turn.
+        </p>
+
+        <div class="form-group">
+          <label>Simulation Mode</label>
+          <select class="form-select" id="sim-mode-select" onchange="App.startNewSimulation()">
+            <option value="ai_vs_ai">Watch AI vs. AI Simulated Match</option>
+            <option value="play_vs_bot">Play as White vs. Coach Bot</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Opening Scenario</label>
+          <select class="form-select" id="sim-opening-select" onchange="App.startNewSimulation()">
+            <option value="italian">C50 Italian Game: Giuoco Piano</option>
+            <option value="french_tactical">C11 French Defense: Kingside Attack</option>
+            <option value="sicilian">B90 Sicilian Defense: Najdorf Setup</option>
+            <option value="queens_gambit">D30 Queen's Gambit Declined</option>
+            <option value="standard">Standard Starting Board</option>
+          </select>
+        </div>
+
+        <div class="sim-form-row">
+          <div class="form-group">
+            <label>Bot Strength</label>
+            <select class="form-select" id="sim-style-select">
+              <option value="tactical">Tactical (2000)</option>
+              <option value="grandmaster">Grandmaster (2400)</option>
+              <option value="club">Club Player (1500)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Auto Speed</label>
+            <select class="form-select" id="sim-speed-select">
+              <option value="1100">Normal (1.1s)</option>
+              <option value="600">Fast (0.6s)</option>
+              <option value="2000">Slow (2.0s)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;">
+          <button class="btn-primary" id="btn-sim-auto" onclick="App.toggleSimAutoRun()">▶ Auto-Simulate</button>
+          <button class="btn-secondary" onclick="App.stepSimulation()">Step 1 Move →</button>
+        </div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.startNewSimulation()">↺ Reset / New Match</button>
+      </div>
+
+      <div class="sidebar-section-title">
+        <span>SIMULATED MATCH LOG</span>
+        <span id="sim-ply-counter">0 moves</span>
+      </div>
+
+      <div class="sidebar-games-list" id="sim-move-log">
+        <!-- Populated dynamically as simulated moves occur -->
+      </div>
+
+      <button class="btn-primary" style="width:100%; padding:10px;" onclick="App.sendSimToFullReview()">
+        ★ Open Full Game Review of Match
+      </button>
+    </section>
+
+    <!-- Center Simulator Board Stage -->
+    <section class="board-stage">
+      <div class="stage-header">
+        <div class="stage-title">
+          <h2 id="sim-header-title">Live Match Simulation — Best Move Visualizer</h2>
+          <p id="sim-header-subtitle">Arrows show Top 3 Engine Best Moves (#1 Green, #2 Blue, #3 Amber)</p>
+        </div>
+        <span class="engine-pill" id="sim-turn-indicator">White to Move</span>
+      </div>
+
+      <!-- Top Simulated Player -->
+      <div class="player-bar">
+        <div class="player-info">
+          <div class="player-avatar">B</div>
+          <div>
+            <span class="player-name" id="sim-black-name">TacticalBot_Black</span>
+            <span class="player-rating">(2000 AI)</span>
+          </div>
+        </div>
+        <div class="clock-box" id="sim-black-status">Ready</div>
+      </div>
+
+      <!-- Eval Bar + Simulator 8x8 Board -->
+      <div class="board-row">
+        <div class="eval-bar-container">
+          <span class="eval-score-label top" id="sim-eval-top"></span>
+          <div class="eval-bar-white" id="sim-eval-fill" style="height: 52%;"></div>
+          <span class="eval-score-label bottom" id="sim-eval-bottom">+0.25</span>
+        </div>
+
+        <div class="chessboard-wrapper">
+          <div class="chessboard-grid" id="sim-board-grid"></div>
+          <svg class="board-arrows-overlay" id="sim-arrows-svg" viewBox="0 0 520 520"></svg>
+        </div>
+      </div>
+
+      <!-- Bottom Simulated Player -->
+      <div class="player-bar">
+        <div class="player-info">
+          <div class="player-avatar white-av">W</div>
+          <div>
+            <span class="player-name" id="sim-white-name">TacticalBot_White</span>
+            <span class="player-rating">(2000 AI)</span>
+          </div>
+        </div>
+        <div class="clock-box white-clock" id="sim-white-status">Active Turn</div>
+      </div>
+
+      <div class="stage-footer-bar">
+        <div class="arrow-legend">
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:#81B64C;"></span>
+            <span>#1 Best Move</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:#5C8BB0;"></span>
+            <span>#2 Alternative</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:#F7C631;"></span>
+            <span>#3 Candidate</span>
+          </div>
+        </div>
+        <span style="font-size:11px; color:var(--brand-green-light); font-weight:600;">
+          Click a square or click any Best Move card on the right to play it!
+        </span>
+      </div>
+    </section>
+
+    <!-- Right Panel: Top 3 Best Moves & Live Coach Feedback -->
+    <aside class="right-panel">
+      <div class="panel-header">
+        <h2>Best Moves Advisor</h2>
+        <span class="engine-pill">Top 3 Candidates</span>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-muted);">
+        Real-time evaluation of the current simulated board position. Click any candidate below to execute that move on the board:
+      </p>
+
+      <!-- Top 3 Best Candidate Move Cards -->
+      <div class="candidate-list" id="sim-candidates-list">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Last Simulated Move Coach Evaluation -->
+      <div class="coach-card" id="sim-coach-card" style="margin-top:6px;">
+        <div class="coach-top">
+          <div class="coach-badge-icon" id="sim-coach-badge"></div>
+          <div class="coach-headings">
+            <h3 id="sim-coach-title">Simulation Ready</h3>
+            <p id="sim-coach-sub">Press "Auto-Simulate" or "Step 1 Move"</p>
+          </div>
+        </div>
+        <div class="coach-body" id="sim-coach-body">
+          Watch the engine evaluate candidate moves in real time, or switch to "Play as White vs. Coach Bot" to test your own moves with live best-move arrows!
+        </div>
+      </div>
+
+      <!-- Win Probability Bar -->
+      <div class="sim-controls-card" style="margin-top:auto;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700;">
+          <span>WHITE WIN PROBABILITY</span>
+          <span id="sim-win-pct-text" style="color:var(--brand-green-light);">52.0%</span>
+        </div>
+        <div style="width:100%; height:10px; background:#1E1D1B; border-radius:5px; overflow:hidden;">
+          <div id="sim-win-pct-bar" style="width:52%; height:100%; background:var(--brand-green); transition:width 0.3s;"></div>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted);">
+          Calculated using Chess.com's CAPS2 centipawn-to-win-probability sigmoid formula.
+        </p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ====================================================================
+       VIEW 3: CHESS.COM SYNCED GAMES LIBRARY (Figma Screen 3)
+       ==================================================================== -->
+  <main class="app-view" id="view-library">
+    <div class="library-container">
+      <div class="library-top-bar">
+        <div class="library-title">
+          <h1>Chess.com Synced Games Library</h1>
+          <p id="library-api-endpoint">Free Public API Polling · GET https://api.chess.com/pub/player/dilanchess/games/archives</p>
+        </div>
+
+        <div class="sync-controls-bar">
+          <input type="text" class="form-input" id="lib-username-input" value="" placeholder="Enter Chess.com username" style="width:200px;" />
+          <button class="btn-primary" onclick="App.triggerSync(false, document.getElementById('lib-username-input').value)">Sync My Real Games</button>
+          <button class="btn-secondary" onclick="App.clearDemoGames()">Clear Demo Games</button>
+        </div>
+      </div>
+
+      <!-- Live Sync Toast Banner -->
+      <div class="toast-banner" id="library-toast">
+        <div class="toast-left">
+          <span class="pulse-dot"></span>
+          <span id="library-toast-text">Auto-Sync Active: Monitoring Chess.com archives for new completed games.</span>
+        </div>
+        <button class="btn-primary" onclick="App.openLatestGameReview()">Review Latest Game →</button>
+      </div>
+
+      <!-- 4 KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Games Synced</div>
+          <div class="kpi-value" id="kpi-total-games">5</div>
+          <div class="kpi-sub">100% Free Chess.com Public API</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Average Accuracy (CAPS2)</div>
+          <div class="kpi-value" id="kpi-avg-acc" style="color:var(--brand-green);">84.2%</div>
+          <div class="kpi-sub">Across reviewed games</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Brilliant Moves (!!)</div>
+          <div class="kpi-value" id="kpi-brilliants" style="color:var(--color-brilliant);">1</div>
+          <div class="kpi-sub">Tactical piece sacrifices</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Avg Blunders / Game</div>
+          <div class="kpi-value" id="kpi-blunders" style="color:var(--color-mistake);">1.0</div>
+          <div class="kpi-sub">Click any game to inspect blunders</div>
+        </div>
+      </div>
+
+      <!-- Filter Tabs & Custom PGN Button -->
+      <div class="filter-row">
+        <div class="filter-tabs">
+          <button class="tab-pill active" onclick="App.filterLibrary('all', this)">All Games</button>
+          <button class="tab-pill" onclick="App.filterLibrary('rapid', this)">Rapid</button>
+          <button class="tab-pill" onclick="App.filterLibrary('blitz', this)">Blitz</button>
+          <button class="tab-pill" onclick="App.filterLibrary('bullet', this)">Bullet</button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" class="form-input" id="lib-search-input" placeholder="Search opponent or opening..." oninput="App.loadLibraryGames()" style="width:240px;" />
+        </div>
+      </div>
+
+      <!-- Games Archive Table -->
+      <div class="games-table-card">
+        <table class="games-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Players</th>
+              <th>Result</th>
+              <th>Opening</th>
+              <th>Accuracy</th>
+              <th>Highlights</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="library-table-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ====================================================================
+       VIEW 4: SETTINGS MODAL (Figma Screen 4)
+       ==================================================================== -->
+  <main class="app-view" id="view-settings">
+    <div class="settings-wrapper">
+      <div class="settings-card">
+        <div>
+          <h2 style="font-size:22px; font-weight:800;">Sync &amp; Engine Settings</h2>
+          <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+            Configure Chess.com Public API auto-sync and chessboard appearance
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>CHESS.COM USERNAME</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" class="form-input" id="settings-username" value="DilanChess" style="flex:1;" />
+            <button class="btn-primary" onclick="App.saveSettings()">Save &amp; Sync</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>AUTO-SYNC POLLING INTERVAL</label>
+          <select class="form-select" id="settings-poll-interval">
+            <option value="15">Every 15 seconds</option>
+            <option value="30" selected>Every 30 seconds (Recommended)</option>
+            <option value="60">Every 60 seconds</option>
+            <option value="0">Manual Sync Only</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>BOARD THEME (FIGMA DESIGN TOKENS)</label>
+          <div class="theme-swatches">
+            <button class="theme-btn active" onclick="App.setBoardTheme('green', this)">
+              <div class="swatch-pair">
+                <span class="swatch-box" style="background:#EBECD0;"></span>
+                <span class="swatch-box" style="background:#739552;"></span>
+              </div>
+              <span>Chess Green</span>
+            </button>
+            <button class="theme-btn" onclick="App.setBoardTheme('tournament', this)">
+              <div class="swatch-pair">
+                <span class="swatch-box" style="background:#DEE3E6;"></span>
+                <span class="swatch-box" style="background:#8CA2AD;"></span>
+              </div>
+              <span>Tournament</span>
+            </button>
+            <button class="theme-btn" onclick="App.setBoardTheme('walnut', this)">
+              <div class="swatch-pair">
+                <span class="swatch-box" style="background:#F0D9B5;"></span>
+                <span class="swatch-box" style="background:#B58863;"></span>
+              </div>
+              <span>Walnut</span>
+            </button>
+            <button class="theme-btn" onclick="App.setBoardTheme('slate', this)">
+              <div class="swatch-pair">
+                <span class="swatch-box" style="background:#E2E4E7;"></span>
+                <span class="swatch-box" style="background:#6B7280;"></span>
+              </div>
+              <span>Slate</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-rail); border:1px solid rgba(255,164,89,0.5); border-radius:10px; padding:14px;">
+          <strong style="color:var(--color-mistake); font-size:12px; display:block; margin-bottom:4px;">
+            Fair Play &amp; Architecture Notice
+          </strong>
+          <p style="font-size:11px; color:var(--text-muted); line-height:1.45;">
+            Completed games are synced directly from the official Chess.com Published-Data API in your browser, analyzed via local Web Workers, and cached in your browser's IndexedDB. Live best-move recommendations are restricted strictly to the self-contained Match Simulator to keep your Chess.com account 100% Fair Play compliant.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ====================================================================
+       MODAL: IMPORT GAME BY LINK OR PGN
+       ==================================================================== -->
+  <div class="modal-backdrop" id="import-game-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#262421; border:1px solid #3d3a34; border-radius:14px; width:100%; max-width:540px; padding:24px; box-shadow:0 16px 48px rgba(0,0,0,0.7);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:18px; font-weight:800; color:#fff;">Import Game for Instant Review</h3>
+        <button onclick="App.closeImportModal()" style="background:none; border:none; color:#8b8882; font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
+        Paste your <strong>Chess.com game link</strong> (e.g. <code>chess.com/game/live/12345678</code>) or paste the <strong>PGN</strong> of any recent game:
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <textarea id="import-input-field" class="form-input" rows="5" placeholder="Paste Chess.com link OR paste PGN moves here..." style="width:100%; font-family:monospace; font-size:12px; resize:vertical; padding:10px;"></textarea>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:11px; color:var(--text-muted);">
+            Tip: In Chess.com, click <strong>Share &gt; PGN &gt; Copy</strong>.
+          </span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-secondary" onclick="App.closeImportModal()">Cancel</button>
+            <button class="btn-primary" id="btn-submit-import" onclick="App.submitImportModal()">Analyze &amp; Review &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/assets.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/chesscom.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
